@@ -42,7 +42,7 @@ const zoteroMetadataTemplate = `{{title}}
 {{citekey}}
 {{collections}}
 {{related}}
-{{tags}}, #zotero, #literature-notes, #reference
+{{tags}} #zotero #literature-notes #reference
 {{pdfAttachments}}
 
 {{abstractNote}}

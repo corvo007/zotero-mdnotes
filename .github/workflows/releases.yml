@@ -1,8 +1,7 @@
 on:
   push:
-    # Sequence of patterns matched against refs/tags
     tags:
-    - '*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - '*' # 当推送到匹配的标签时触发，比如 v1.0, v20.15.10
 
 name: Upload Release Asset
 
@@ -13,37 +12,43 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      # Set up nodeJS. Yarn is automatically available on GitHub Actions workers.
+
       - name: Setup NodeJS 12.x
         uses: actions/setup-node@v1
         with:
           node-version: '16.x'
-      - name: Build project # This would actually build your project
-        id: build
+
+      - name: Build project
         run: |
           yarn install
           make
           make release
-          echo "::set-output name=tag_name::$(git tag --sort version:refname | tail -n 1)"
+
+      - name: Extract tag name # 从 github.ref 提取纯粹的标签名
+        run: echo "TAG_NAME=$(echo ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
+        env:
+          GITHUB_REF: ${{ github.ref }}
+      
+      # 之前的 set-output 是不必要的，因为我们可以直接使用环境变量
+      
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ github.ref }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: v${{ github.ref }}
+          tag_name: ${{ env.TAG_NAME }} # 使用纯粹的标签名
+          release_name: "Release ${{ env.TAG_NAME }}"
           draft: false
           prerelease: false
           body_path: changelog.md
+
       - name: Upload Release Asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./mdnotes-${{ steps.build.outputs.tag_name }}.xpi
-          asset_name: mdnotes-${{ steps.build.outputs.tag_name }}.xpi
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./mdnotes-${{ env.TAG_NAME }}.xpi
+          asset_name: mdnotes-${{ env.TAG_NAME }}.xpi
           asset_content_type: application/zip

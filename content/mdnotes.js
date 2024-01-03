@@ -28,11 +28,11 @@ const zoteroNoteTemplate = `{{tags}}
 
 {{noteContent}}`;
 
-const zoteroMetadataTemplate = `{{title}}
-
+const zoteroMetadataTemplate = `
 ## Metadata
 
 {{itemType}}
+{{title}}
 {{author}}
 {{proceedingsTitle}}
 {{date}}
@@ -944,7 +944,7 @@ Zotero.Mdnotes =
           Zotero.File.putContentsAsync(outputFile, file.content);
 
           // Attach note
-          this.addLinkToMDNote(outputFile, item);
+          // this.addLinkToMDNote(outputFile, item);
           addObsidianLink(outputFile, item);
         }
       }
